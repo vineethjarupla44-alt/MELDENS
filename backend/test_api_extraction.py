@@ -17,11 +17,33 @@ Tests the FastAPI HTTP endpoints for document text extraction:
 5. Verify response
 """
 import os
+import socket
+import threading
+import time
 import requests
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
+
+def ensure_server():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if s.connect_ex(('127.0.0.1', 8000)) == 0:
+            return
+    import uvicorn
+    from app.main import app
+    config = uvicorn.Config(app=app, host="127.0.0.1", port=8000, log_level="warning")
+    server = uvicorn.Server(config)
+    t = threading.Thread(target=server.run, daemon=True)
+    t.start()
+    for _ in range(40):
+        time.sleep(0.2)
+        try:
+            r = requests.get("http://127.0.0.1:8000/api/health", timeout=0.5)
+            if r.status_code == 200:
+                return
+        except Exception:
+            pass
 
 def create_temp_pdf(filename: str):
     c = canvas.Canvas(filename, pagesize=letter)
@@ -34,6 +56,7 @@ def create_temp_pdf(filename: str):
     c.save()
 
 def main():
+    ensure_server()
     # 1. Get a patient
     patients_resp = requests.get(f"{BASE_URL}/patients")
     assert patients_resp.status_code == 200

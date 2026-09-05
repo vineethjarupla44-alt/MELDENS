@@ -68,7 +68,8 @@ def create_synthetic_pdf(filepath: str, title: str, pages_content: list[str]) ->
         c.setFillColorRGB(0.1, 0.1, 0.1)
         c.setFont("Helvetica", 10)
         y = 680
-        for line in content.splitlines():
+        safe_content = content or "SYNTHETIC DEMONSTRATION DATA"
+        for line in safe_content.splitlines():
             if y < 60:
                 c.showPage()
                 y = 750
@@ -418,7 +419,21 @@ def seed_synthetic_data(db: Session) -> Patient:
         )
         db.add_all([tl1, tl2, tl3])
 
-    # =========================================================================
+    if p1:
+        canonical_docs = {
+            "eleanor_vance_intake_questionnaire.pdf",
+            "st_jude_discharge_summary_aug2026.pdf",
+            "quest_diagnostics_cbc_aug2026.pdf"
+        }
+        extra_docs = db.query(Document).filter(
+            Document.patient_id == p1.id,
+            ~Document.filename.in_(canonical_docs)
+        ).all()
+        for ed in extra_docs:
+            db.query(DocumentPage).filter(DocumentPage.document_id == ed.id).delete()
+            db.delete(ed)
+        if extra_docs:
+            db.commit()
     # PATIENT 2: Marcus Thorne (MRN: MED-SYNTH-5103)
     # Covers: High result with range (Total Cholesterol, LDL),
     # Historical lab value change (Cholesterol 278 -> 248),
@@ -1619,10 +1634,22 @@ def seed_synthetic_data(db: Session) -> Patient:
             if not os.path.exists(doc_path):
                 pages = db.query(DocumentPage).filter(DocumentPage.document_id == doc.id).order_by(DocumentPage.page_number).all()
                 if pages:
-                    page_texts = [page.extracted_text for page in pages]
+                    page_texts = [(page.extracted_text or "SYNTHETIC DEMONSTRATION DATA") for page in pages]
                 else:
                     page_texts = [doc.raw_text or "SYNTHETIC DEMONSTRATION DATA"]
                 create_synthetic_pdf(doc_path, doc.original_name or doc.filename, page_texts)
+
+    # Clean up any leftover test-suite documents attached to synthetic patients
+    test_docs = db.query(Document).filter(
+        Document.patient_id.in_([sp.id for sp in all_synth_patients]),
+        Document.filename.like("test_%")
+    ).all()
+    for td in test_docs:
+        db.query(DocumentPage).filter(DocumentPage.document_id == td.id).delete()
+        db.delete(td)
+    if test_docs:
+        db.flush()
+
 
     # Ensure Eleanor has 3 documents if created early
     if p1 and db.query(Document).filter(Document.patient_id == p1.id).count() < 3:

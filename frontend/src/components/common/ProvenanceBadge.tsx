@@ -49,7 +49,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
     normalizedKey = 'PATIENT_PROVIDED';
   }
 
-  const badgeConfig: Record<string, { label: string; icon: React.ElementType; classes: string }> = {
+  const badgeConfig: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; classes: string }> = {
     PATIENT_PROVIDED: {
       label: 'Patient Provided',
       icon: UserCheck,

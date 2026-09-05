@@ -34,8 +34,10 @@ import {
   AlertCircle,
   ExternalLink,
   Info,
-  Sparkles
+  Sparkles,
+  Layers
 } from 'lucide-react';
+import { ClinicalGraph3D } from '../components/clinical/ClinicalGraph3D';
 
 
 export const MedicalRecordPage: React.FC = () => {
@@ -201,6 +203,7 @@ export const MedicalRecordPage: React.FC = () => {
 
   const sections = [
     { id: 'ai-summary', label: 'AI Summary', icon: Sparkles, count: 'AI' },
+    { id: '3d-graph', label: '3D Clinical Graph', icon: Layers, count: '3D' },
     { id: 'patient-info', label: '1. Patient Info', icon: User, count: null },
     { id: 'symptoms', label: '2. Symptoms', icon: Activity, count: patientData?.profile?.symptoms ? 1 : 0 },
     { id: 'conditions', label: '3. Conditions', icon: ShieldAlert, count: conditions.length },
@@ -313,6 +316,33 @@ export const MedicalRecordPage: React.FC = () => {
             patientId={selectedPatientId}
             patientName={patientData ? `${patientData.first_name} ${patientData.last_name}` : undefined}
             onOpenSourceDocument={(docId) => handleOpenSourceDocument(docId)}
+          />
+        )}
+      </section>
+
+      {/* 3D Clinical Information Graph Module */}
+      <section id="3d-graph" className="scroll-mt-24">
+        {patientData && (
+          <ClinicalGraph3D
+            patientName={`${patientData.first_name} ${patientData.last_name}`}
+            patientMrn={patientData.mrn}
+            counts={{
+              documents: documents.length,
+              labs: labs.length,
+              medications: meds.length,
+              conditions: conditions.length,
+              allergies: allergies.length,
+              timeline: timelineEvents.length,
+              conflicts: 2,
+              summary: 'AI'
+            }}
+            onSelectNode={(nodeId) => {
+              const el = document.getElementById(nodeId);
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            height="500px"
           />
         )}
       </section>

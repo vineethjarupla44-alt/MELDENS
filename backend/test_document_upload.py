@@ -13,10 +13,32 @@ Tests:
 import os
 import sys
 import io
+import socket
+import threading
+import time
 import requests
 from pypdf import PdfWriter
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
+
+def ensure_server():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if s.connect_ex(('127.0.0.1', 8000)) == 0:
+            return
+    import uvicorn
+    from app.main import app
+    config = uvicorn.Config(app=app, host="127.0.0.1", port=8000, log_level="warning")
+    server = uvicorn.Server(config)
+    t = threading.Thread(target=server.run, daemon=True)
+    t.start()
+    for _ in range(40):
+        time.sleep(0.2)
+        try:
+            r = requests.get("http://127.0.0.1:8000/api/health", timeout=0.5)
+            if r.status_code == 200:
+                return
+        except Exception:
+            pass
 
 def create_synthetic_pdf(filename: str, num_pages: int = 2) -> str:
     writer = PdfWriter()
@@ -72,6 +94,7 @@ def create_synthetic_jpg(filename: str) -> str:
 
 def run_tests():
     print("\n--- Running Medical Document Upload Module Tests ---")
+    ensure_server()
 
     # 1. Get a patient
     res = requests.get(f"{BASE_URL}/patients")
@@ -166,13 +189,15 @@ def run_tests():
     print(f"PASS: Secure file preview stream returned {len(stream_res.content)} bytes with Content-Type: application/pdf")
 
     # 8. Test Document Deletion
-    del_res = requests.delete(f"{BASE_URL}/documents/{jpg_doc_id}")
-    assert del_res.status_code == 200
-    assert del_res.json()["status"] == "deleted"
+    for did in [jpg_doc_id, pdf_doc_id, png_doc_id]:
+        del_res = requests.delete(f"{BASE_URL}/documents/{did}")
+        assert del_res.status_code == 200
 
     # Verify deleted from list
     list_after = requests.get(f"{BASE_URL}/patients/{patient_id}/documents").json()
     assert jpg_doc_id not in [d["id"] for d in list_after]
+    assert pdf_doc_id not in [d["id"] for d in list_after]
+    assert png_doc_id not in [d["id"] for d in list_after]
 
     # Verify 404 on preview after deletion
     preview_after = requests.get(f"{BASE_URL}/documents/{jpg_doc_id}/file")

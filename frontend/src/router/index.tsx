@@ -24,6 +24,10 @@ export const router = createBrowserRouter([
         element: <MedicalRecordPage />,
       },
       {
+        path: 'records',
+        element: <MedicalRecordPage />,
+      },
+      {
         path: 'verification',
         element: <VerificationPage />,
       },

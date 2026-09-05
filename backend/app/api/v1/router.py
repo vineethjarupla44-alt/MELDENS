@@ -356,6 +356,17 @@ def execute_verification_action(
 
 
 # --- Conflict Endpoints ---
+@api_v1_router.get("/conflicts", response_model=List[ConflictRecordRead])
+def list_conflicts(
+    patient_id: Optional[str] = Query(None, description="Optional patient UUID filter"),
+    status: Optional[str] = Query(None, description="UNRESOLVED, RESOLVED, DISMISSED"),
+    db: Session = Depends(get_db)
+):
+    repo = ConflictRepository(db)
+    if patient_id:
+        return repo.list_by_patient(patient_id, status=status)
+    return repo.list_all(status=status)
+
 @api_v1_router.get("/patients/{patient_id}/conflicts", response_model=List[ConflictRecordRead])
 def get_patient_conflicts(
     patient_id: str, 

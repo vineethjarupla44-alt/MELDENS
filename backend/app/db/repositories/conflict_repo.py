@@ -36,6 +36,12 @@ class ConflictRepository:
             query = query.filter(ConflictRecord.status == status)
         return query.order_by(ConflictRecord.created_at.desc()).all()
 
+    def list_all(self, status: Optional[str] = None) -> List[ConflictRecord]:
+        query = self.db.query(ConflictRecord)
+        if status:
+            query = query.filter(ConflictRecord.status == status)
+        return query.order_by(ConflictRecord.created_at.desc()).all()
+
     def resolve(self, conflict_id: str, resolve_in: ConflictResolveRequest) -> Optional[ConflictRecord]:
         conflict = self.db.query(ConflictRecord).filter(ConflictRecord.id == conflict_id).first()
         if not conflict:

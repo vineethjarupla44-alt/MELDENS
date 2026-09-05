@@ -17,6 +17,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ClinicalGraph3D } from '../components/clinical/ClinicalGraph3D';
 
 export const DashboardPage: React.FC = () => {
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -91,6 +92,34 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
       </GlassCard>
+
+      {/* Interactive 3D Clinical Information Graph */}
+      <ClinicalGraph3D
+        patientName="Eleanor Vance"
+        patientMrn="MED-SYNTH-8492"
+        counts={{
+          documents: 3,
+          labs: 12,
+          medications: 4,
+          conditions: 3,
+          allergies: 2,
+          timeline: 8,
+          conflicts: 2,
+          summary: 'AI Verified'
+        }}
+        onSelectNode={(nodeId) => {
+          if (nodeId === 'conflicts') {
+            navigate('/conflicts');
+          } else if (nodeId === 'timeline') {
+            navigate('/timeline');
+          } else if (nodeId === 'documents') {
+            navigate('/documents');
+          } else {
+            navigate('/records');
+          }
+        }}
+        height="480px"
+      />
 
       {/* Component Showcase & Clinical Guardrails */}
       <div>

@@ -396,6 +396,15 @@ def run_all_tests():
         print("================================================================================")
 
     finally:
+        # Clean up test documents from database
+        try:
+            for d in [doc1, doc2, doc3, doc4, doc5]:
+                if d and d.id:
+                    db.query(DocumentPage).filter(DocumentPage.document_id == d.id).delete()
+                    db.query(Document).filter(Document.id == d.id).delete()
+            db.commit()
+        except Exception:
+            pass
         # Clean up test files from disk
         for path in test_files_created:
             if os.path.exists(path):

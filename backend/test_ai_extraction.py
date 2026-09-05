@@ -276,6 +276,18 @@ def run_ai_extraction_tests():
         print("================================================================================")
 
     finally:
+        # Clean up test document from database
+        try:
+            if 'doc' in locals() and doc and doc.id:
+                db.query(LabResult).filter(LabResult.document_id == doc.id).delete()
+                db.query(Medication).filter(Medication.document_id == doc.id).delete()
+                db.query(Condition).filter(Condition.document_id == doc.id).delete()
+                db.query(AuditLog).filter(AuditLog.entity_id == doc.id).delete()
+                db.query(DocumentPage).filter(DocumentPage.document_id == doc.id).delete()
+                db.query(Document).filter(Document.id == doc.id).delete()
+                db.commit()
+        except Exception:
+            pass
         if os.path.exists(pdf_path):
             try:
                 os.remove(pdf_path)
