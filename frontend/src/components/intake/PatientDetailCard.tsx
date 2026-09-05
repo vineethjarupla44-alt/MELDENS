@@ -31,15 +31,27 @@ export const PatientDetailCard: React.FC<PatientDetailCardProps> = ({
 }) => {
   const [showAudit, setShowAudit] = useState(false);
 
-  // Calculate age from DOB
+  // Calculate age from DOB (safe from timezone offset)
   let age: number | null = null;
+  let formattedDOB = patient.date_of_birth || 'N/A';
   if (patient.date_of_birth) {
-    const birth = new Date(patient.date_of_birth);
-    const now = new Date();
-    age = now.getFullYear() - birth.getFullYear();
-    const m = now.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
-      age--;
+    const parts = patient.date_of_birth.trim().split(/[-/]/);
+    if (parts.length === 3) {
+      let y = 0, m = 0, d = 0;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts.map(Number);
+        formattedDOB = `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
+      } else {
+        [d, m, y] = parts.map(Number);
+        formattedDOB = `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
+      }
+      const birth = new Date(y, m - 1, d);
+      const now = new Date();
+      age = now.getFullYear() - birth.getFullYear();
+      const monthDiff = now.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+        age--;
+      }
     }
   }
 
@@ -65,7 +77,7 @@ export const PatientDetailCard: React.FC<PatientDetailCardProps> = ({
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
                 <span>{patient.gender}</span>
                 <span>•</span>
-                <span>DOB: {patient.date_of_birth} {age !== null ? `(${age} yrs)` : ''}</span>
+                <span>DOB: {formattedDOB} {age !== null ? `(${age} yrs)` : ''}</span>
                 {patient.blood_type && (
                   <>
                     <span>•</span>

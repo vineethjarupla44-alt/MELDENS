@@ -34,10 +34,20 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({
   onCancel,
   isLoading = false,
 }) => {
+  const toDisplayDOB = (dateStr?: string): string => {
+    if (!dateStr) return '';
+    const trimmed = dateStr.trim();
+    const yyyymmdd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+    if (yyyymmdd) {
+      return `${yyyymmdd[3]}-${yyyymmdd[2]}-${yyyymmdd[1]}`;
+    }
+    return trimmed;
+  };
+
   // Demographics
   const [firstName, setFirstName] = useState(initialData?.first_name || '');
   const [lastName, setLastName] = useState(initialData?.last_name || '');
-  const [dob, setDob] = useState(initialData?.date_of_birth || '');
+  const [dob, setDob] = useState(toDisplayDOB(initialData?.date_of_birth) || '');
   const [gender, setGender] = useState(initialData?.gender || 'Female');
   const [bloodType, setBloodType] = useState(initialData?.blood_type || '');
   const [calculatedAge, setCalculatedAge] = useState<number | null>(null);
@@ -83,7 +93,7 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({
     if (initialData) {
       setFirstName(initialData.first_name || '');
       setLastName(initialData.last_name || '');
-      setDob(initialData.date_of_birth || '');
+      setDob(toDisplayDOB(initialData.date_of_birth) || '');
       setGender(initialData.gender || 'Female');
       setBloodType(initialData.blood_type || '');
       setSymptoms(initialData.symptoms || '');
@@ -276,17 +286,29 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">
               Date of Birth <span className="text-rose-400">*</span>
-              <span className="text-[10px] text-slate-400 font-normal ml-1.5">(DD-MM-YYYY or pick from calendar)</span>
+              <span className="text-[10px] text-cyan-400 font-mono ml-1.5">(Format: DD-MM-YYYY)</span>
             </label>
             <div className="relative flex items-center">
               <input
+                type="text"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                placeholder="DD-MM-YYYY (e.g. 12-04-1968)"
+                maxLength={10}
+                className="w-full px-3 py-2 pr-10 text-sm bg-slate-950/80 border border-slate-700 rounded-lg text-white font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              />
+              <input
                 ref={dobInputRef}
                 type="date"
-                value={normalizeDateToISO(dob)}
                 max={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setDob(e.target.value)}
-                style={{ colorScheme: 'dark' }}
-                className="w-full px-3 py-2 pr-10 text-sm bg-slate-950/80 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                tabIndex={-1}
+                className="sr-only"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const [y, m, d] = e.target.value.split('-');
+                    setDob(`${d}-${m}-${y}`);
+                  }
+                }}
               />
               <button
                 type="button"
@@ -294,20 +316,24 @@ export const PatientIntakeForm: React.FC<PatientIntakeFormProps> = ({
                   try {
                     dobInputRef.current?.showPicker?.();
                   } catch {
-                    dobInputRef.current?.focus();
+                    dobInputRef.current?.click();
                   }
                 }}
                 className="absolute right-2 text-slate-400 hover:text-cyan-400 transition-colors p-1 cursor-pointer"
-                title="Click to open calendar"
+                title="Select date from calendar"
               >
                 <Calendar className="w-4 h-4 text-cyan-400" />
               </button>
             </div>
-            {calculatedAge !== null && (
-              <span className="text-[11px] text-cyan-400 mt-1 block">
-                Calculated Age: {calculatedAge} years
+            {calculatedAge !== null ? (
+              <span className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
+                <Check className="w-3 h-3" /> Valid DOB — Calculated Age: {calculatedAge} years
               </span>
-            )}
+            ) : dob.trim().length > 0 ? (
+              <span className="text-[11px] text-amber-400/90 mt-1 block font-mono">
+                Format: DD-MM-YYYY (e.g. 15-08-1980)
+              </span>
+            ) : null}
             {errors.dob && <p className="text-xs text-rose-400 mt-1">{errors.dob}</p>}
           </div>
 
