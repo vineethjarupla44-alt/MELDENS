@@ -1,0 +1,49 @@
+# =============================================================================
+# MedLens Root Git Ignore
+# =============================================================================
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Python & Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node & Frontend Build
+node_modules/
+dist/
+dist-ssr/
+build/
+.npm
+*.tsbuildinfo
+
+# Application Storage & Local Database
+backend/medlens.db
+backend/medlens.db*
+backend/uploads/*
+!backend/uploads/.gitkeep
+medlens.db
+medlens.db*
+uploads/*
+!uploads/.gitkeep
+
+# System & Editor
+.DS_Store
+Thumbs.db
+*.log
+logs/
+*.local
+.idea/
+.vscode/*
+!.vscode/extensions.json
