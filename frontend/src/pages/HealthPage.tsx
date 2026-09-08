@@ -4,7 +4,7 @@ import { StatusIndicator } from '../components/common/StatusIndicator';
 import { Button } from '../components/common/Button';
 import { healthService } from '../services';
 import type { HealthResponse } from '../types';
-import { Activity, RefreshCw, Database, Server, Cpu, CheckCircle2, XCircle } from 'lucide-react';
+import { Activity, RefreshCw, Database, Server, Cpu, CheckCircle2, XCircle, Terminal } from 'lucide-react';
 
 export const HealthPage: React.FC = () => {
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -141,16 +141,23 @@ export const HealthPage: React.FC = () => {
         </div>
       )}
 
-      {/* Raw Payload View */}
-      <GlassCard>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-300 font-mono">Raw API Response JSON</h3>
-          <span className="text-[11px] text-slate-500 font-mono">200 OK</span>
-        </div>
-        <pre className="p-4 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-300 overflow-x-auto">
-          {health ? JSON.stringify(health, null, 2) : error ? JSON.stringify({ error }, null, 2) : 'Loading...'}
-        </pre>
-      </GlassCard>
+      {/* Background Developer Diagnostics (Hidden by Default) */}
+      <div className="pt-2">
+        <details className="group rounded-xl border border-slate-800/60 bg-slate-950/40 p-3 transition-all">
+          <summary className="cursor-pointer text-xs font-mono text-slate-500 hover:text-slate-300 flex items-center justify-between select-none">
+            <span className="flex items-center gap-2">
+              <Terminal className="w-3.5 h-3.5 text-slate-500" />
+              <span>Developer Diagnostics & Raw Payload (Hidden)</span>
+            </span>
+            <span className="text-[10px] text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div className="mt-3">
+            <pre className="p-4 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono text-cyan-300/80 overflow-x-auto max-h-64">
+              {health ? JSON.stringify(health, null, 2) : error ? JSON.stringify({ error }, null, 2) : 'Loading...'}
+            </pre>
+          </div>
+        </details>
+      </div>
     </div>
   );
 };
